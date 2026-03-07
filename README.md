@@ -19,7 +19,7 @@ Each university has its own USOS instance with a unique base URL (e.g., `https:/
 
 - Full OAuth 1.0a flow implementation for USOS
 - Automatic user creation and updates
-- Configurable scopes and redirect paths
+- Configurable scopes and email domain
 - TypeScript support with full type definitions
 - Works with any USOS instance
 - Both server-side and client-side plugins
@@ -58,33 +58,52 @@ Add these to your `.env` file:
 USOS_BASE_URL=https://apps.usos.pwr.edu.pl
 USOS_CONSUMER_KEY=your_consumer_key
 USOS_CONSUMER_SECRET=your_consumer_secret
+USOS_EMAIL_DOMAIN=student.pwr.edu.pl
 ```
 
-### 3. Server Setup
+### 3. Database Schema
 
-Add the plugin to your Better Auth configuration:
+Add custom fields to your Better Auth user table. This plugin stores additional USOS data:
 
 ```typescript
-import { betterAuth } from "better-auth";
-import { usosAuth } from "better-auth-usos";
+import { betterAuth } from 'better-auth';
+import { usosAuth } from 'better-auth-usos';
 
 export const auth = betterAuth({
   database: {
     // your database config
+  },
+  user: {
+    additionalFields: {
+      studentNumber: {
+        type: 'number',
+        required: false,
+      },
+      usosId: {
+        type: 'string',
+        required: false,
+      },
+    },
   },
   plugins: [
     usosAuth({
       usosBaseUrl: process.env.USOS_BASE_URL!,
       consumerKey: process.env.USOS_CONSUMER_KEY!,
       consumerSecret: process.env.USOS_CONSUMER_SECRET!,
-      scopes: "studies|offline_access",
-      redirectPath: "/usos/callback",
+      emailDomain: process.env.USOS_EMAIL_DOMAIN!,
+      scopes: 'studies|offline_access',
       onSuccess: async (user) => {
-        return "/dashboard";
+        return '/dashboard';
       },
     }),
   ],
 });
+```
+
+After configuration, run Better Auth migrations to create the database schema:
+
+```bash
+npx better-auth migrate
 ```
 
 ### 4. Client Setup
@@ -92,8 +111,8 @@ export const auth = betterAuth({
 Add the client plugin to your Better Auth client:
 
 ```typescript
-import { createAuthClient } from "better-auth/client";
-import { usosAuthClient } from "better-auth-usos/client";
+import { createAuthClient } from 'better-auth/client';
+import { usosAuthClient } from 'better-auth-usos/client';
 
 export const authClient = createAuthClient({
   plugins: [usosAuthClient()],
@@ -119,14 +138,14 @@ function LoginButton() {
 
 ### `UsosAuthPluginOptions`
 
-| Option           | Type                                       | Required | Default                     | Description                         |
-| ---------------- | ------------------------------------------ | -------- | --------------------------- | ----------------------------------- |
-| `usosBaseUrl`    | `string`                                   | Yes      | -                           | Base URL of your USOS instance      |
-| `consumerKey`    | `string`                                   | Yes      | -                           | OAuth consumer key from USOS        |
-| `consumerSecret` | `string`                                   | Yes      | -                           | OAuth consumer secret from USOS     |
-| `scopes`         | `string`                                   | No       | `"studies\|offline_access"` | OAuth scopes to request             |
-| `redirectPath`   | `string`                                   | No       | `"/usos/callback"`          | Callback path after OAuth           |
-| `onSuccess`      | `(user: any) => Promise<string> \| string` | No       | `"/"`                       | Redirect path after successful auth |
+| Option           | Type                                                | Required | Default                     | Description                                                            |
+| ---------------- | --------------------------------------------------- | -------- | --------------------------- | ---------------------------------------------------------------------- |
+| `usosBaseUrl`    | `string`                                            | Yes      | -                           | Base URL of your USOS instance                                         |
+| `consumerKey`    | `string`                                            | Yes      | -                           | OAuth consumer key from USOS                                           |
+| `consumerSecret` | `string`                                            | Yes      | -                           | OAuth consumer secret from USOS                                        |
+| `emailDomain`    | `string`                                            | Yes      | -                           | Email domain for users without USOS email (e.g., `student.pwr.edu.pl`) |
+| `scopes`         | `string`                                            | No       | `"studies\|offline_access"` | OAuth scopes to request                                                |
+| `onSuccess`      | `(user: UsosAuthUser) => Promise<string> \| string` | No       | `"/"`                       | Redirect path after successful auth                                    |
 
 ## Available Scopes
 
@@ -146,12 +165,13 @@ Check your USOS instance documentation for available scopes.
 
 The plugin automatically retrieves and stores:
 
-- First name
-- Last name
-- Email (if available)
-- Student number (if available)
-- USOS user ID
-- Profile photo (if available)
+- First name and last name (combined as `name`)
+- Email (if available from USOS, otherwise generated as `{student_number}@{emailDomain}`)
+- Student number (`studentNumber` field)
+- USOS user ID (`usosId` field)
+- Profile photo 50x50 (if available)
+
+When a user doesn't have an email in USOS (common for students), the plugin generates one using their student number and the configured `emailDomain`. For example, if `emailDomain` is `student.pwr.edu.pl` and student number is `123456`, the email will be `123456@student.pwr.edu.pl`.
 
 ## API Endpoints
 
@@ -165,7 +185,11 @@ The plugin creates these endpoints:
 Full TypeScript support is included. Import types as needed:
 
 ```typescript
-import type { UsosAuthPluginOptions, UsosUserProfile } from "better-auth-usos";
+import type {
+  UsosAuthPluginOptions,
+  UsosAuthUser,
+  UsosUserProfile,
+} from 'better-auth-usos';
 ```
 
 ## Example Projects
@@ -174,44 +198,36 @@ import type { UsosAuthPluginOptions, UsosUserProfile } from "better-auth-usos";
 
 ```typescript
 // auth.ts (server)
-import { betterAuth } from "better-auth";
-import { usosAuth } from "better-auth-usos";
+import { betterAuth } from 'better-auth';
+import { usosAuth } from 'better-auth-usos';
 
 export const auth = betterAuth({
   database: {
-    provider: "pg",
+    provider: 'pg',
     url: process.env.DATABASE_URL!,
+  },
+  user: {
+    additionalFields: {
+      studentNumber: {
+        type: 'number',
+        required: false,
+      },
+      usosId: {
+        type: 'string',
+        required: false,
+      },
+    },
   },
   plugins: [
     usosAuth({
       usosBaseUrl: process.env.USOS_BASE_URL!,
       consumerKey: process.env.USOS_CONSUMER_KEY!,
       consumerSecret: process.env.USOS_CONSUMER_SECRET!,
-      onSuccess: async (user) => "/dashboard",
+      emailDomain: process.env.USOS_EMAIL_DOMAIN!,
+      onSuccess: async (user) => '/dashboard',
     }),
   ],
 });
-
-// auth-client.ts (client)
-import { createAuthClient } from "better-auth/client";
-import { usosAuthClient } from "better-auth-usos/client";
-
-export const authClient = createAuthClient({
-  baseURL: "http://localhost:3000",
-  plugins: [usosAuthClient()],
-});
-
-// login-page.tsx
-function LoginPage() {
-  return (
-    <div>
-      <h1>Login</h1>
-      <a href="/api/auth/usos/login">
-        Login with USOS
-      </a>
-    </div>
-  );
-}
 ```
 
 ## Troubleshooting

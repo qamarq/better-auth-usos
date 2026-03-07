@@ -1,10 +1,20 @@
+export interface UsosAuthUser {
+  id: string;
+  email: string;
+  emailVerified: boolean;
+  name: string;
+  image?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export interface UsosAuthPluginOptions {
   usosBaseUrl: string;
   consumerKey: string;
   consumerSecret: string;
   scopes?: string;
-  redirectPath?: string;
-  onSuccess?: (user: any) => Promise<string> | string;
+  emailDomain: string;
+  onSuccess?: (user: UsosAuthUser) => Promise<string> | string;
 }
 
 export interface UsosUserProfile {
@@ -14,8 +24,8 @@ export interface UsosUserProfile {
   student_number: string | null;
   email: string | null;
   photo_urls?: {
-    "50x50"?: string;
-    "100x100"?: string;
+    '50x50'?: string;
+    '100x100'?: string;
   };
 }
 
