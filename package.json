@@ -16,7 +16,12 @@
   },
   "scripts": {
     "build": "tsc",
-    "prepublishOnly": "pnpm build"
+    "prepublishOnly": "pnpm build",
+    "lint": "pnpm lint:style && pnpm lint:typecheck",
+    "lint:style": "eslint src --ext .ts",
+    "lint:typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "format:check": "prettier --check \"src/**/*.ts\""
   },
   "peerDependencies": {
     "better-auth": "^1.5.0",
@@ -45,8 +50,15 @@
     "url": "https://github.com/qamarq/better-auth-usos"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/crypto-js": "^4.2.2",
     "@types/node": "^25.3.5",
+    "@typescript-eslint/eslint-plugin": "^8.56.1",
+    "@typescript-eslint/parser": "^8.56.1",
+    "eslint": "^10.0.3",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.5",
+    "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "zod": "^4.3.6"
   }

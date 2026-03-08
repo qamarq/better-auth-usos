@@ -144,10 +144,36 @@ export const authClient = createAuthClient({
 
 ### 5. Use in Your Application
 
-Redirect users to the USOS login:
+#### Option 1: Using the client helper (Recommended)
 
 ```typescript
+import { authClient } from "./auth-client";
+
 // React example
+function LoginButton() {
+  const handleLogin = async () => {
+    await authClient.signIn.usos();
+  };
+
+  return <button onClick={handleLogin}>Login with USOS</button>;
+}
+
+// With options
+function LoginWithOptions() {
+  const handleLogin = async () => {
+    await authClient.signIn.usos({
+      callbackURL: "/dashboard", // Custom redirect after login
+      newTab: false, // Open in new tab (optional)
+    });
+  };
+
+  return <button onClick={handleLogin}>Login with USOS</button>;
+}
+```
+
+#### Option 2: Direct redirect
+
+```typescript
 function LoginButton() {
   const handleLogin = () => {
     window.location.href = "/api/auth/usos/login";
@@ -304,6 +330,63 @@ export const auth = betterAuth({
       },
     }),
   ],
+});
+
+// auth-client.ts (client)
+import { createAuthClient } from "better-auth/client";
+import { usosAuthClient } from "better-auth-usos/client";
+
+export const authClient = createAuthClient({
+  baseURL: "http://localhost:3000",
+  plugins: [usosAuthClient()],
+});
+
+// login-page.tsx
+import { authClient } from "./auth-client";
+
+function LoginPage() {
+  const handleLogin = async () => {
+    await authClient.signIn.usos();
+  };
+
+  return (
+    <div>
+      <h1>Login</h1>
+      <button onClick={handleLogin}>Login with USOS</button>
+    </div>
+  );
+}
+```
+
+## Client API
+
+The client plugin provides a convenient `signIn.usos()` method:
+
+```typescript
+await authClient.signIn.usos(options);
+```
+
+### Options
+
+| Option        | Type      | Default | Description                                |
+| ------------- | --------- | ------- | ------------------------------------------ |
+| `callbackURL` | `string`  | -       | Custom redirect URL after successful login |
+| `newTab`      | `boolean` | `false` | Open login in a new tab                    |
+
+### Examples
+
+```typescript
+// Basic usage
+await authClient.signIn.usos();
+
+// With custom callback
+await authClient.signIn.usos({
+  callbackURL: "/dashboard",
+});
+
+// Open in new tab
+await authClient.signIn.usos({
+  newTab: true,
 });
 ```
 
