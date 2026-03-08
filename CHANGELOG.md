@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/qamarq/better-auth-usos/compare/v1.0.7...v1.1.0) (2026-03-08)
+
+
+### Features
+
+* add auto publish ([9942b8f](https://github.com/qamarq/better-auth-usos/commit/9942b8f6a681d127474eae6545497133907574bb))
+
 # 1.0.0 (2026-03-08)
 
 
