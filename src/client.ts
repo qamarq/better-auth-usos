@@ -9,7 +9,7 @@ export function usosAuthClient() {
     getActions: () => ({
       signIn: {
         usos: async (options?: { callbackURL?: string; newTab?: boolean }) => {
-          const url = `/usos/login`;
+          const url = `api/auth/usos/login`;
 
           if (typeof window !== "undefined") {
             if (options?.newTab) {
