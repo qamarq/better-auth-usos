@@ -1,5 +1,10 @@
 # better-auth-usos
 
+[![npm version](https://badge.fury.io/js/better-auth-usos.svg)](https://www.npmjs.com/package/better-auth-usos)
+[![Better Auth](https://img.shields.io/badge/Better%20Auth-Plugin-blue)](https://www.better-auth.com)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+
 USOS OAuth 1.0a authentication plugin for [Better Auth](https://www.better-auth.com).
 
 ## What is USOS?
