@@ -277,12 +277,16 @@ export function usosAuth<T extends Record<string, any> = {}>(
               ...customFields,
             });
           } else {
-            await ctx.context.internalAdapter.updateUser(existingUser.user.id, {
-              name: `${usosUser.first_name} ${usosUser.last_name}`,
-              image: usosUser.photo_urls?.["50x50"] ?? null,
-              ...customFields,
-            });
-            user = existingUser.user;
+            user = await ctx.context.internalAdapter.updateUser(
+              existingUser.user.id,
+              {
+                email,
+                emailVerified: true,
+                name: `${usosUser.first_name} ${usosUser.last_name}`,
+                image: usosUser.photo_urls?.["50x50"] ?? null,
+                ...customFields,
+              },
+            );
           }
 
           const session = await ctx.context.internalAdapter.createSession(
