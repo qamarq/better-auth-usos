@@ -6,15 +6,17 @@ export interface UsosAuthUser {
   image?: string | null;
   createdAt: Date;
   updatedAt: Date;
+  [key: string]: any;
 }
 
-export interface UsosAuthPluginOptions {
+export interface UsosAuthPluginOptions<T extends Record<string, any> = {}> {
   usosBaseUrl: string;
   consumerKey: string;
   consumerSecret: string;
   scopes?: string;
   emailDomain: string;
-  onSuccess?: (user: UsosAuthUser) => Promise<string> | string;
+  userFields?: (usosProfile: UsosUserProfile) => T;
+  onSuccess?: (user: UsosAuthUser & T) => Promise<string> | string;
 }
 
 export interface UsosUserProfile {
@@ -24,8 +26,8 @@ export interface UsosUserProfile {
   student_number: string | null;
   email: string | null;
   photo_urls?: {
-    '50x50'?: string;
-    '100x100'?: string;
+    "50x50"?: string;
+    "100x100"?: string;
   };
 }
 

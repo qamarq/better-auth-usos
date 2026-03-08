@@ -61,13 +61,13 @@ USOS_CONSUMER_SECRET=your_consumer_secret
 USOS_EMAIL_DOMAIN=student.pwr.edu.pl
 ```
 
-### 3. Database Schema
+### 3. Database Schema & Custom Fields
 
-Add custom fields to your Better Auth user table. This plugin stores additional USOS data:
+The plugin allows you to map USOS profile data to your custom user fields using the `userFields` option:
 
 ```typescript
-import { betterAuth } from 'better-auth';
-import { usosAuth } from 'better-auth-usos';
+import { betterAuth } from "better-auth";
+import { usosAuth } from "better-auth-usos";
 
 export const auth = betterAuth({
   database: {
@@ -76,11 +76,19 @@ export const auth = betterAuth({
   user: {
     additionalFields: {
       studentNumber: {
-        type: 'number',
+        type: "number",
         required: false,
       },
       usosId: {
-        type: 'string',
+        type: "string",
+        required: false,
+      },
+      firstName: {
+        type: "string",
+        required: false,
+      },
+      lastName: {
+        type: "string",
         required: false,
       },
     },
@@ -91,14 +99,29 @@ export const auth = betterAuth({
       consumerKey: process.env.USOS_CONSUMER_KEY!,
       consumerSecret: process.env.USOS_CONSUMER_SECRET!,
       emailDomain: process.env.USOS_EMAIL_DOMAIN!,
-      scopes: 'studies|offline_access',
+      scopes: "studies|offline_access",
+      userFields: (usosProfile) => ({
+        studentNumber: usosProfile.student_number
+          ? Number.parseInt(usosProfile.student_number)
+          : null,
+        usosId: usosProfile.id,
+        firstName: usosProfile.first_name,
+        lastName: usosProfile.last_name,
+      }),
       onSuccess: async (user) => {
-        return '/dashboard';
+        console.log(user.firstName, user.lastName);
+        return "/dashboard";
       },
     }),
   ],
 });
 ```
+
+The `userFields` function receives the USOS profile and returns an object with your custom fields. These fields will be:
+
+- Added when creating a new user
+- Updated when an existing user logs in
+- Available in the `onSuccess` callback with full TypeScript support
 
 After configuration, run Better Auth migrations to create the database schema:
 
@@ -111,8 +134,8 @@ npx better-auth migrate
 Add the client plugin to your Better Auth client:
 
 ```typescript
-import { createAuthClient } from 'better-auth/client';
-import { usosAuthClient } from 'better-auth-usos/client';
+import { createAuthClient } from "better-auth/client";
+import { usosAuthClient } from "better-auth-usos/client";
 
 export const authClient = createAuthClient({
   plugins: [usosAuthClient()],
@@ -138,14 +161,15 @@ function LoginButton() {
 
 ### `UsosAuthPluginOptions`
 
-| Option           | Type                                                | Required | Default                     | Description                                                            |
-| ---------------- | --------------------------------------------------- | -------- | --------------------------- | ---------------------------------------------------------------------- |
-| `usosBaseUrl`    | `string`                                            | Yes      | -                           | Base URL of your USOS instance                                         |
-| `consumerKey`    | `string`                                            | Yes      | -                           | OAuth consumer key from USOS                                           |
-| `consumerSecret` | `string`                                            | Yes      | -                           | OAuth consumer secret from USOS                                        |
-| `emailDomain`    | `string`                                            | Yes      | -                           | Email domain for users without USOS email (e.g., `student.pwr.edu.pl`) |
-| `scopes`         | `string`                                            | No       | `"studies\|offline_access"` | OAuth scopes to request                                                |
-| `onSuccess`      | `(user: UsosAuthUser) => Promise<string> \| string` | No       | `"/"`                       | Redirect path after successful auth                                    |
+| Option           | Type                                                    | Required | Default                     | Description                                                            |
+| ---------------- | ------------------------------------------------------- | -------- | --------------------------- | ---------------------------------------------------------------------- |
+| `usosBaseUrl`    | `string`                                                | Yes      | -                           | Base URL of your USOS instance                                         |
+| `consumerKey`    | `string`                                                | Yes      | -                           | OAuth consumer key from USOS                                           |
+| `consumerSecret` | `string`                                                | Yes      | -                           | OAuth consumer secret from USOS                                        |
+| `emailDomain`    | `string`                                                | Yes      | -                           | Email domain for users without USOS email (e.g., `student.pwr.edu.pl`) |
+| `scopes`         | `string`                                                | No       | `"studies\|offline_access"` | OAuth scopes to request                                                |
+| `userFields`     | `(usosProfile: UsosUserProfile) => T`                   | No       | -                           | Function to map USOS profile to custom user fields                     |
+| `onSuccess`      | `(user: UsosAuthUser & T) => Promise<string> \| string` | No       | `"/"`                       | Redirect path after successful auth                                    |
 
 ## Available Scopes
 
@@ -163,15 +187,49 @@ Check your USOS instance documentation for available scopes.
 
 ## User Data
 
-The plugin automatically retrieves and stores:
+### Default Fields
 
-- First name and last name (combined as `name`)
-- Email (if available from USOS, otherwise generated as `{student_number}@{emailDomain}`)
-- Student number (`studentNumber` field)
-- USOS user ID (`usosId` field)
-- Profile photo 50x50 (if available)
+The plugin automatically stores these standard Better Auth fields:
+
+- `email` - If available from USOS, otherwise generated as `{student_number}@{emailDomain}`
+- `name` - First name and last name combined
+- `image` - Profile photo 50x50 (if available)
+- `emailVerified` - Always `true` for USOS users
 
 When a user doesn't have an email in USOS (common for students), the plugin generates one using their student number and the configured `emailDomain`. For example, if `emailDomain` is `student.pwr.edu.pl` and student number is `123456`, the email will be `123456@student.pwr.edu.pl`.
+
+### Custom Fields with `userFields`
+
+Use the `userFields` option to map any USOS profile data to your custom database fields. The function receives the full USOS profile:
+
+```typescript
+interface UsosUserProfile {
+  id: string;
+  first_name: string;
+  last_name: string;
+  student_number: string | null;
+  email: string | null;
+  photo_urls?: {
+    "50x50"?: string;
+    "100x100"?: string;
+  };
+}
+```
+
+Example mapping common fields:
+
+```typescript
+userFields: (usosProfile) => ({
+  studentNumber: usosProfile.student_number
+    ? Number.parseInt(usosProfile.student_number)
+    : null,
+  usosId: usosProfile.id,
+  firstName: usosProfile.first_name,
+  lastName: usosProfile.last_name,
+});
+```
+
+These custom fields are automatically created/updated for every user login.
 
 ## API Endpoints
 
@@ -189,7 +247,7 @@ import type {
   UsosAuthPluginOptions,
   UsosAuthUser,
   UsosUserProfile,
-} from 'better-auth-usos';
+} from "better-auth-usos";
 ```
 
 ## Example Projects
@@ -198,22 +256,30 @@ import type {
 
 ```typescript
 // auth.ts (server)
-import { betterAuth } from 'better-auth';
-import { usosAuth } from 'better-auth-usos';
+import { betterAuth } from "better-auth";
+import { usosAuth } from "better-auth-usos";
 
 export const auth = betterAuth({
   database: {
-    provider: 'pg',
+    provider: "pg",
     url: process.env.DATABASE_URL!,
   },
   user: {
     additionalFields: {
       studentNumber: {
-        type: 'number',
+        type: "number",
         required: false,
       },
       usosId: {
-        type: 'string',
+        type: "string",
+        required: false,
+      },
+      firstName: {
+        type: "string",
+        required: false,
+      },
+      lastName: {
+        type: "string",
         required: false,
       },
     },
@@ -224,7 +290,18 @@ export const auth = betterAuth({
       consumerKey: process.env.USOS_CONSUMER_KEY!,
       consumerSecret: process.env.USOS_CONSUMER_SECRET!,
       emailDomain: process.env.USOS_EMAIL_DOMAIN!,
-      onSuccess: async (user) => '/dashboard',
+      userFields: (usosProfile) => ({
+        studentNumber: usosProfile.student_number
+          ? Number.parseInt(usosProfile.student_number)
+          : null,
+        usosId: usosProfile.id,
+        firstName: usosProfile.first_name,
+        lastName: usosProfile.last_name,
+      }),
+      onSuccess: async (user) => {
+        console.log(`Welcome ${user.firstName} ${user.lastName}!`);
+        return "/dashboard";
+      },
     }),
   ],
 });

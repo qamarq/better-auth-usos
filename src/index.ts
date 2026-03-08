@@ -8,6 +8,7 @@ import { z } from "zod";
 import type {
   UsosAccessToken,
   UsosAuthPluginOptions,
+  UsosAuthUser,
   UsosOAuthState,
   UsosRequestToken,
   UsosUserProfile,
@@ -131,13 +132,16 @@ async function getUsosUserProfile(
   return response.json() as Promise<UsosUserProfile>;
 }
 
-export function usosAuth(options: UsosAuthPluginOptions) {
+export function usosAuth<T extends Record<string, any> = {}>(
+  options: UsosAuthPluginOptions<T>,
+) {
   const {
     usosBaseUrl,
     consumerKey,
     consumerSecret,
     scopes = "studies|offline_access",
     emailDomain,
+    userFields,
     onSuccess,
   } = options;
 
@@ -258,6 +262,8 @@ export function usosAuth(options: UsosAuthPluginOptions) {
           const email =
             usosUser.email ?? `${usosUser.student_number}@${emailDomain}`;
 
+          const customFields = userFields ? userFields(usosUser) : ({} as T);
+
           const existingUser =
             await ctx.context.internalAdapter.findUserByEmail(email);
 
@@ -268,19 +274,13 @@ export function usosAuth(options: UsosAuthPluginOptions) {
               emailVerified: true,
               name: `${usosUser.first_name} ${usosUser.last_name}`,
               image: usosUser.photo_urls?.["50x50"] ?? null,
-              studentNumber: usosUser.student_number
-                ? Number.parseInt(usosUser.student_number)
-                : null,
-              usosId: usosUser.id,
+              ...customFields,
             });
           } else {
             await ctx.context.internalAdapter.updateUser(existingUser.user.id, {
               name: `${usosUser.first_name} ${usosUser.last_name}`,
               image: usosUser.photo_urls?.["50x50"] ?? null,
-              studentNumber: usosUser.student_number
-                ? Number.parseInt(usosUser.student_number)
-                : null,
-              usosId: usosUser.id,
+              ...customFields,
             });
             user = existingUser.user;
           }
@@ -295,7 +295,7 @@ export function usosAuth(options: UsosAuthPluginOptions) {
           });
 
           const redirectUrl = onSuccess
-            ? await Promise.resolve(onSuccess(user))
+            ? await Promise.resolve(onSuccess(user as UsosAuthUser & T))
             : "/";
           return ctx.redirect(redirectUrl);
         },
