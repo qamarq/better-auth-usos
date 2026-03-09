@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/qamarq/better-auth-usos/compare/v1.1.0...v1.1.1) (2026-03-09)
+
+
+### Bug Fixes
+
+* update CI workflow to support multiple Node.js versions ([e43c91d](https://github.com/qamarq/better-auth-usos/commit/e43c91dc3632403dbcbfe1802bb08c8360aee6c6))
+
 # [1.1.0](https://github.com/qamarq/better-auth-usos/compare/v1.0.7...v1.1.0) (2026-03-08)
 
 
