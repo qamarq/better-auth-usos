@@ -1,3 +1,12 @@
+## [1.1.2](https://github.com/qamarq/better-auth-usos/compare/v1.1.1...v1.1.2) (2026-09-01)
+
+
+### Bug Fixes
+
+* add packages field to pnpm-workspace.yaml ([b6cc0e5](https://github.com/qamarq/better-auth-usos/commit/b6cc0e5f5669c7269628a4f1f58fd7b3fc4aae9d))
+* commit pnpm allowBuilds policy to fix CI install ([b9e5c56](https://github.com/qamarq/better-auth-usos/commit/b9e5c564d540e4d2489f60e5cb135da3984247e7))
+* replace unmaintained crypto-js with node:crypto for HMAC-SHA1 ([54dd414](https://github.com/qamarq/better-auth-usos/commit/54dd4148df52caa4cd66a046fce52aed798b0410))
+
 ## [1.1.1](https://github.com/qamarq/better-auth-usos/compare/v1.1.0...v1.1.1) (2026-03-09)
 
 
