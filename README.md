@@ -40,7 +40,7 @@ npm install better-auth-usos
 This plugin requires the following packages:
 
 ```bash
-npm install better-auth crypto-js oauth-1.0a zod
+npm install better-auth oauth-1.0a zod
 ```
 
 ## Usage

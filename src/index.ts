@@ -1,7 +1,7 @@
 import type { BetterAuthPlugin } from "better-auth";
 import { APIError, createAuthEndpoint } from "better-auth/api";
 import { setSessionCookie } from "better-auth/cookies";
-import CryptoJS, { HmacSHA1 } from "crypto-js";
+import { createHmac } from "node:crypto";
 import OAuth from "oauth-1.0a";
 import { z } from "zod";
 
@@ -17,8 +17,7 @@ import type {
 export * from "./types";
 
 function createHmacSha1Base64(baseString: string, key: string) {
-  const hmac: CryptoJS.lib.WordArray = HmacSHA1(baseString, key);
-  return CryptoJS.enc.Base64.stringify(hmac);
+  return createHmac("sha1", key).update(baseString).digest("base64");
 }
 
 function removeMultipleSlashesFromUrl(url: string) {
